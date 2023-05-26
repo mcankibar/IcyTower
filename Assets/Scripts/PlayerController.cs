@@ -41,13 +41,14 @@ public class PlayerController : MonoBehaviour
         
         anim.SetBool("isGrounded",isGrounded);
         float horizontalInput = Input.GetAxis("Horizontal");
-        body.velocity = new Vector2(horizontalInput*speed*1.2f, body.velocity.y);
-        
-        if (currentVelocity.x > 0.01f||horizontalInput > 0.01f)
+        body.AddForce(new Vector2(horizontalInput * speed * 1.2f, 0f));
+
+        if (Mathf.Abs(body.velocity.x) > speed)
         {
-            
-            transform.localScale=new Vector3(5,5,1);
-        }else if (horizontalInput < -0.01f||currentVelocity.x < -0.01f)
+            // Limit the maximum velocity to the specified speed
+            body.velocity = new Vector2(Mathf.Sign(body.velocity.x) * speed, body.velocity.y);
+        }
+        else if (horizontalInput < -0.01f||currentVelocity.x < -0.01f)
         {
            
             transform.localScale = new Vector3(-5, 5, 1);
@@ -99,53 +100,48 @@ public class PlayerController : MonoBehaviour
 
     void Jump()
     {
-        if(isGrounded==true){
-        body.velocity = new Vector2(body.velocity.x, speed*2f);
-        isGrounded = false;
-        anim.SetBool("isGrounded",false);
-        CapsuleCollider2D.size = new Vector2(0.21f, 0.21f);
-
+        if (isGrounded == true)
+        {
+            body.AddForce(new Vector2(0f, speed * 2f), ForceMode2D.Impulse);
+            isGrounded = false;
+            anim.SetBool("isGrounded", false);
+            CapsuleCollider2D.size = new Vector2(0.21f, 0.21f);
         }
     }
     
 
     private void OnCollisionEnter2D(Collision2D col)
     {
-        
         if (col.gameObject.tag == "Platform" || col.gameObject.tag == "ÇUBUK YÜZEY")
         {
-            if(body.velocity.y<=7){
-            isGrounded = true;
-            CapsuleCollider2D.size = new Vector2(CapsuleCollider2D.size.x, 0.2904f);
-            anim.SetBool("isGrounded",true);
+            if (body.velocity.y <= 7)
+            {
+                isGrounded = true;
+                CapsuleCollider2D.size = new Vector2(CapsuleCollider2D.size.x, 0.2904f);
+                anim.SetBool("isGrounded", true);
             }
 
             if (isGrounded == true)
             {
-                 score = body.position.y;
+                score = body.position.y;
                 int numInt = (int)Math.Ceiling(score);
-                if(numInt>0){
-                    
-                TextMeshProObject.text ="Score: "+numInt ;
+                if (numInt > 0)
+                {
+                    TextMeshProObject.text = "Score: " + numInt;
                 }
             }
-            
         }
-        if (col.gameObject.tag == "Wall")
+        else if (col.gameObject.tag == "Wall")
         {
-            
-            Debug.Log("DUVAAR");
-            var speed = currentVelocity.magnitude;
-            var direction = Vector3.Reflect(currentVelocity.normalized, col.contacts[0].normal);
-
-            body.velocity = new Vector2(20f, body.velocity.y);
-
-
-
-        }
-
+            // Calculate the new direction for bouncing off the wall
+            Vector2 contactNormal = col.contacts[0].normal;
+            Vector2 newDirection = Vector2.Reflect(currentVelocity.normalized, contactNormal).normalized;
         
+            // Apply the new direction to the player's velocity
+            body.velocity = newDirection * speed;
+        }
     }
+
 
     
 }
